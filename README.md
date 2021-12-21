@@ -12,7 +12,7 @@ $ pkg install python
 <h2>Menjalankan Tool</h2>
 <pre>
 <code>
-$ cd cow3
+$ cd app
 $ pip install -r requirements.txt
 $ python app.py
 </code>
